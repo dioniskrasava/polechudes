@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<!-- saved from url=(0035)http://razman.ru/gamepole/GAME.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+ 	
+ 	<meta name="author" content="Иван Игоревич Белов">
+ 	<title>Поле-Чудес!!!</title>
+    <script type="text/javascript" src="./Поле-Чудес!!!_files/point.js"></script>
+    <script type="text/javascript" src="./Поле-Чудес!!!_files/logic.js"></script>
+    <script type="text/javascript" src="./Поле-Чудес!!!_files/function.js"></script>
+    
+     <script type="text/javascript" src="./Поле-Чудес!!!_files/bookvs.js"></script>
+    <script type="text/javascript" src="./Поле-Чудес!!!_files/попадание в сектор.js"></script>
+   
+   
+    <script type="text/javascript">
+var pjs = new PointJS('2d',1200,650,{backgroundColor:'#dddddd'});    // создаем объект игрового движка PointJS.
+// С параметрами (2d-графика), размер поля 800 на 500(ширина, высота), цвет фона - серый
+var game = pjs.game;				// создаем объект game объекта pjs, для более компактного кода
+var key = pjs.keyControl;			// создаем объект key объекта pjs, для более компактного кода
+key.initKeyControl();				// инициализируем клавиатуру
+var mouse = pjs.mouseControl;		// (см.выше)
+mouse.initMouseControl();			// инициализируем мышь
+var brush = pjs.brush;				// метод рисования объектов
+var oop = pjs.OOP;                  // создаем объект для быстрого доступа к библиотеке ООП
+var point = pjs.vector.point;       // создаем объект для быстрого доступа к библиотеке 
+var size = pjs.vector.size;         // создаем объект для быстрого доступа к библиотеке 
+var system = pjs.system;
+
+var randNum = randomQuestion();     // Создаем переменную случайного числа и возврщаем в нее значения выполнения ф-и.
+//randNum = 1;
+var textQestNum = randomQuestionReal(randNum); // в зависимости от случайно сгенерированного числа, получаем текст вопроса
+randomQuestionReal(randNum);
+var randomBukv;
+var music1 = pjs.audio.newAudio("Поле-Чудес!!!_files/pic1-3.mp3", 1.0); // звуковая дорожка при вращении барабана
+var music2 = pjs.audio.newAudio("Поле-Чудес!!!_files/pic1-2.wav", 1.0); // звуковая дорожка 
+var music3 = pjs.audio.newAudio("Поле-Чудес!!!_files/truemusic.wav", 1.0);
+
+var otvetPrav = false;
+var otverNePrav = true;
+var vernayaBookv = false;
+var ciklOchkiv = true;
+var posledniUglBarabana = 0;
+var vernayaBookvCicle = true;
+var boolVrashBarabZanovo = false;
+
+
+var arrNumberLetterNull =[];
+
+var n = [0,10,6,7,9,7,8,6,9,6,6,8,7,6,8,8,6,7,7,7,9];
+var  arrNumberLetter =[];
+for(var i=1;i<n[randNum] ;i++){
+  arrNumberLetter.push(i);            // создает массив индексо букв ответа .. если букв 6 - то [1,2,3,4,5,6]
+};
+
+
+ochkiVN = 0; // выпавшие очки - в виде цифры (не строки)
+var ramka1 =game.newRectObject({   // нижняя рамка
+x:16,y:360,w:454,h:274,strokeWidth: 3,                  // х-коорд.,у-коорд.,ширина,высота,толщина рамки
+strokeColor: 'black',alpha:0.1,fillColor:"Blue"});         // цвет рамки, прозрачность, цвет
+
+var ramka2 =game.newRectObject({   // рамка для барабана
+x:16,y:16,w:454,h:330,strokeWidth: 3,strokeColor: 'black',alpha:0.15,fillColor:"Blue"});
+var ramkaPravil =game.newRectObject({ // рамка правил
+x:484,y:484,w:694,h:149,strokeWidth: 3,strokeColor: 'black',alpha:0.1,fillColor:"red"});
+var ramkaBukv =game.newRectObject({ // рамка для клавиатуры
+x:484,y:360,w:694,h:120,strokeWidth: 2,strokeColor: 'black',alpha:0.1,fillColor:"green"});
+var ramkaBig =game.newRectObject({  // большая, внешняя рамка
+x:1,y:1,w:1196,h:646,strokeWidth: 3,strokeColor: 'black'});
+var ramkaBig2 =game.newRectObject({  // большая, внешняя рамка-2
+x:3+3,y:3+3,w:1196-10,h:646-10,strokeWidth: 2,strokeColor: 'black'});
+var ramkaBig3 =game.newRectObject({    // большая, внешняя рамка-3
+x:5+6,y:5+6,w:1196-19,h:646-19,strokeWidth: 1,strokeColor: 'black'});
+var ramkaQuestion =game.newRectObject({
+x:475,y:16,w:700,h:100,strokeWidth: 2,strokeColor: 'black',alpha:0.1,fillColor:"green"});
+var baraban = game.newImageObject({		// создаем объект БАРАБАН из уже созданного класса newImageObject в движке PointJS
+file: 'Поле-Чудес!!!_files/baraban_1.png',		            // указываем адресс расположения изображения с барабаном
+x:23,								   // указываем координату по Х
+y:23,								   // указываем координату по У
+angle:0	});						       	// указываем угол наклона
+
+var dAngle = 0;  // скорость вращения барабана по часовой стрелке (dAngle)
+var ddAngle = 0;  // ускорение вращения барабана по часовой стрелке (ddAngle)
+
+var strelka2 = game.newImageObject({   // объект-стрелка  
+file: 'Поле-Чудес!!!_files/strlk.png',x:330,y:110,});
+
+var textTwo = game.newTextObject({ 	  // текст об сумме очков
+x : 22+50, y : 395-30, 								
+text : "У вас " + ochki + " очков." , size : 17, 							
+padding : 10, color : "#000000", fillColor : "#FBFE6F",  strokeColor : "#DA4848",  strokeWidth : 2 });
+
+var textTri = game.newTextObject({      // текст о выпавших очках
+x : 22+40, y : 414-30,                                
+text : "Пока ничего не выпало. Вращайте этот барабан." ,size : 18, padding : 10, color : "#000000",                   
+fillColor : "#000000", strokeColor : "#000000", strokeWidth : 2 });
+
+var gagaga = game.newEllipsObject({         //объект - прыгающий мячик
+x : 1135, y : 100, w : 50, h : 50, fillColor : "green", strokeColor : "black", strokeWidth : 2, 
+angle : 0, alpha : 1, visible : true });
+var dyGaga = 2;                             // скорость падения мячика
+
+
+// Кнопки "букву" "слово"
+var buttonBuk = game.newTextObject({x:66,y:589,text:"Букву",color:"black",size:20});  // кнопка "Букву"
+var buttonSlovo = game.newTextObject({x:355,y:589,text:"Слово",color:"black",size:20});  // кнопка "Слово"
+var boxButBukv = game.newBaseObject({x:60,y:585,h:27,w:62});   // статический бокс для кнопки "Букву"
+var boxButSlovo = game.newBaseObject({x:350,y:585,h:25,w:70}); // статический бокс для кнопки "Слово"
+var boxButProverka = game.newBaseObject({x:815,y:303,h:40,w:100}); // статический бокс для кнопки "проверка"
+var boxButSteret = game.newBaseObject({x:930,y:303,h:40,w:100}); // статический бокс для кнопки "стереть"
+var boxPrizRisk = game.newBaseObject({x:815,y:303,h:40,w:100});
+var boxPrizNoRisk = game.newBaseObject({x:930,y:303,h:40,w:100});
+
+//Стартовое меню
+var textMenu1 = game.newTextObject({
+x:450,y:365,text : "Начать игру.",size:40, padding:10, color : "#000000",                   
+ strokeColor : "#000000", strokeWidth : 2 , angle: 0 
+});
+var textMenu2 = game.newTextObject({
+x:450,y:435,text : "О разработчике.",size:40, padding:10, color : "Green",                   
+ strokeColor : "#000000", strokeWidth : 2 , angle: 0 
+});
+var textZagolovok1 = game.newTextObject({x:400,y:30,text : "Поле",size:100, padding:10, 
+color : "#000000" });
+var textZagolovok2 = game.newTextObject({x:380,y:130,text : "Чудес",size:130, padding:10, 
+color : "#000000"});
+
+var textMenu1ramka = game.newBaseObject({x:450,y:365,w:250,h:60,angle: 0});
+var textMenu2ramka = game.newBaseObject({x:450,y:435,w:300,h:60,angle: 0});
+var textMenuRazr = game.newTextObject({x:500,y:605,text : "Создал: Белов Иван Игоревич.\
+	Права не защищены. Редактируйте наздоровье. :)",
+	size:10, padding:10, color : "#000000",                   
+ strokeColor : "#000000", strokeWidth : 0.25 
+});
+var barabanMenu = game.newImageObject({file: 'Поле-Чудес!!!_files/baraban_1.png',x:1,y:1,angle:0});
+var barabanMenu2 = game.newImageObject({file: 'Поле-Чудес!!!_files/baraban_1.png',x:900-2,y:1,angle:0});
+var bigRamka = game.newRectObject({
+	x:0,y:0,h:647,w:1197,strokeColor:"black",strokeWidth:2
+});
+
+var dBarMenAng1 = 1;
+var dBarMenAng2 = 1;
+//
+game.newLoop("menu", function(){
+game.clear();
+textMenu1.draw();
+textMenu2.draw();
+textMenuRazr.draw();
+barabanMenu.draw();
+barabanMenu2.draw();
+textZagolovok1.draw();
+textZagolovok2.draw();
+textMenu1.angle += 0.005 ;
+textMenu2.angle += 0.005 ;
+barabanMenu.angle += dBarMenAng1;
+barabanMenu2.angle -= dBarMenAng2;
+bigRamka.draw();
+
+if((mouse.isPeekStatic('LEFT',textMenu1ramka.getStaticBox()))){
+	 game.setLoop('gameVvod'); 
+};
+if(key.isDown('SPACE')){game.setLoop('gameVvod');};
+if(key.isPress('Q')){dBarMenAng1 += 1};
+if(key.isPress('E')){dBarMenAng2 += 1};
+if((mouse.isPeekStatic('LEFT',textMenu2ramka.getStaticBox()))){
+	 game.setLoop('author'); 
+};
+brush.drawText({x:100,y:300,text:"Нажми Q",color:"black",size:9});
+brush.drawText({x:1000,y:300,text:"Нажми E",color:"black",size:9});
+});
+
+game.newLoop("author", function(){
+game.clear();
+textMenu1.draw();
+brush.drawMultiText({text: "   ОБ АВТОРЕ ПРОДУКТА \n\n\n" +
+	"	Данный программный продукт разработан Беловым Иваном Игоревичом.\n" + 
+	"В качестве курсовой работы по теме: \"Создание интерактивной игры для детей 'Поле-чудес' \" \n" +
+	"Программа не защищена законом об авторском праве. Любой желающий может размещать, редактировать\n" +
+	"играть и использовать в других целях данный продукт. Желательно, конечно, с ссылкой на автора\n"+
+	"данного продукта.\n" +
+	"\n\n\n 	Желаю удачи и приятного времяпрепровождения при игре.\n(Отдельная благодарность Сафонову Ивану.)" ,
+ x : 20, y : 20, color : "black" , size: 18});
+
+
+if((mouse.isPeekStatic('LEFT',textMenu1ramka.getStaticBox()))){
+	 game.setLoop('game'); };
+});
+//
+function prorBookv(){
+      var arr = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31];
+var word = ['А','Б','В','Г','Д','Е','Ч','Ж','З','И','Й','К',
+            'Л','М','Н','О','П','Р','С','Т','У','Ф','Х','Ц','Ш','Щ','Ъ','Ы','Ь','Э',
+            'Ю','Я'];
+/* Создаем два массива элементов, с нумерацией(для цикла), и с самими символами*/
+var i;                          // счетчик цикла
+var len = arr.length;           // длина массива с индексами
+var dy = 370;                   // переменная для высоты первого ряда (и 2) символов
+var dx, j = 0;                  // переменная для положения по х, и счетчик порядка символа в одном ряду
+for(i=0; i<len; i+=1) {         // цикл
+  dx = (520 + (40)*j);          // расположение элемента по х, зависящее от j
+  brush.drawText({ x : dx, y : dy, // рисуем текст, коорд. по х, коорд. по у
+  text : word[arr[i]],             // текст берется из массива с символами, с помощью массива с индексами
+  color : "yellow",size : 38,align : "center",    // цвет букв, размер, выравнивание - по центру
+  strokeColor: "black",strokeWidth: 1 });         // цвет обводки, ширина обводки
+  j+=1;    // После прорисовывания 1-го символа, j инкриментируем, что дает нам возможность рисовать каждый символ правее
+  if(dx > game.getWH().w - 50*2) {  // если буквы вылезают за поле справа, то
+  dy += (50+5); j=0; }              // спускаем их вниз и начинаем второй ряд
+} };
+
+function prorBookvRect(){          // ф-я прорисовки рамок букв. Аналогична ф-и прорисовки самих букв
+var arr = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31];
+var i;
+var len = arr.length;
+var dy = 366;
+var dx, j = 0; 
+var strW = 1;       // ширина рамки при обычном состоянии
+var strC = "black"; // цвет рамки при обычном состоянии
+for(i=0; i<len; i+=1) {
+  	var ii = (((dx/500)+(dy/366))/2);  // коэф. позволяющий понять, что курсов наведен во внутрь рамки
+
+   	if(((mouse.getPosition().x > dx+37) &&          // если мышь наведена 
+      (mouse.getPosition().y > dy) &&             // на  объект
+    	(mouse.getPosition().x < (dx+37+37)) &&
+    	(mouse.getPosition().y < (dy+45))))   
+  {strW=3;strC="blue";}else{strW=1;strC="black";}; /* то выделяем строку жирным и рисуем ее синим, иначе оставляем все по-старому */
+
+if(((mouse.getPosition().x > 500) &&          // отдельная рамка при наведении на букву А
+      (mouse.getPosition().y > 366) &&            
+      (mouse.getPosition().x < 537) &&
+      (mouse.getPosition().y < 366+45))){brush.drawRect({x:500,y:366,w:37,h:45,strokeColor:"blue",strokeWidth:3});}; 
+
+if(((mouse.getPosition().x > 500) &&          // отдельная рамка при наведении на букву П 
+      (mouse.getPosition().y > 421) &&             
+      (mouse.getPosition().x < 537) &&
+      (mouse.getPosition().y < 421+45))){brush.drawRect({x:500,y:421,w:37,h:45,strokeColor:"blue",strokeWidth:3});}; 
+
+
+    dx = (500 + (40)*j);
+    var arrBB = [brush.drawRect({
+    x : dx, 
+    y : dy, 
+    h: 45,
+    w: 37,
+    strokeColor: strC,
+    strokeWidth: strW,
+    name: "arrBB" + i})];
+         
+j+=1; // рисуем след.рамку правее
+if(dx > game.getWH().w - 120){dy += (50+5); j=0;}  // если рамка ушла далеко вправо, то начнем новый ряд
+}
+ };
+// переменный интерактивной клавиатуры
+var pushBookv;
+var otvPush =[];
+var buk = [];
+for(var i = 1; i <=32; i++){
+  
+  if(i < 17){buk[i] = game.newBaseObject({x:500+i*40-40, y:366, w:37, h:45});};
+  if(i >= 17){buk[i] = game.newBaseObject({x:500+(i-16)*40-40, y:421, w:37, h:45});};
+};
+
+// Далее я описываю массив переменных ЛОГИЧЕСКОГО типа. Которые открываю букву, если ее назвали
+
+var m = 21; // количество вопросов 20... но так-как мы будем индексировать с 1, а не 0, то (+1)
+var n = [0,10,6,7,9,7,8,6,9,6,6,8,7,6,8,8,6,7,7,7,9]; // задается количество букв в каждом ответе (+1)
+var boolDraw = [];
+
+for (var i = 1; i < m; i++){
+  boolDraw[i] = [];
+      for (var j = 1; j < n[i]; j++){
+       boolDraw[i][j] = false;
+}}
+
+var qb = [] ; // массив рисуемых букв, содержащихся в ответах
+var m = 21; // кол-во ОТВЕТОВ (+1)
+var n = [0,10,6,7,9,7,8,6,9,6,6,8,7,6,8,8,6,7,7,7,9]; // кол-во букв в каждом ОТВЕТЕ (+1)
+var letters = [[],
+['','И','М','П','Е','Р','А','Т','О','Р'],
+['','Л','Е','Н','И','Н'],
+['','М','А','У','Г','Л','И'],
+['','М','Е','Д','В','Е','Д','Е','В'],
+['','Ц','Е','З','А','Р','Ь'],
+['','С','П','Е','К','Т','Р','А'],
+['','Р','Ю','Р','И','К'],
+['','В','Л','А','Д','И','М','И','Р'],
+['','П','Е','К','И','Н'],
+['','Т','Р','А','М','П'],
+['','Ч','Е','Р','Н','О','Г','О'],
+['','Б','Е','Л','О','Г','О'],
+['','М','И','Н','С','К'],
+['','С','И','Л','Ь','Н','Е','Е'],
+['','Б','У','Д','Д','И','З','М'],
+['','Л','А','В','К','Е'],
+['','С','О','Л','Н','Ц','Е'],
+['','С','И','Р','И','У','С'],
+['','П','Л','У','Т','О','Н'],
+['','Л','И','Н','К','О','Л','Ь','Н']];
+
+for (var i = 1; i < m; i++){
+  qb[i] = [];
+      for (var j = 1; j < n[i]; j++){
+       qb[i][j] = game.newTextObject({text : letters[i][j], x : 500+j*40-40, y : 200, color : "red",size: 38});
+}}
+
+game.newLoop('gameVvod', function(){
+	game.clear();
+	myDialog();
+	game.setLoop('game');
+
+
+});
+game.newLoop('game', function(){
+	topLoopDraw();
+	vrashBaraban();   
+    block_1();
+	pjs.system.setSmoothing(true); // включить сглаживание
+
+});
+
+game.newLoop('theEnd', function() {
+game.clear();
+brush.drawText({x:500,y:200,text:'THE',color:'red',size: 45});
+brush.drawText({x:600,y:200,text:'END',color:'blue',size: 45});
+brush.drawText({x:200,y:400,text:'Увы. Но вы проиграли. Вам не повезло.',color:'black',size: 20});
+});
+
+game.newLoop('theEndHappy', function() {
+game.clear();
+brush.drawText({x:500,y:200,text:'THE',color:'red',size: 45});
+brush.drawText({x:600,y:200,text:'END',color:'blue',size: 45});
+brush.drawText({x:200,y:400,text:'Вы выиграли. Однако вы умный.',color:'black',size: 20});
+});
+
+game.setLoop('menu');					//передать в обработку игровой цикл ('game')
+game.start();							
+
+    </script>
+ </head>
+ <body style="overflow: hidden;">
+ 
+<canvas width="1200" height="650" id="PointJS-canvas_0" style="position: fixed; left: 0px; top: 0px; z-index: 1000; background-color: rgb(221, 221, 221);"></canvas></body></html>
